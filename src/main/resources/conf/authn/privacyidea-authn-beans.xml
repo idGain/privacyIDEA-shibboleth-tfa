@@ -2,13 +2,13 @@
 <!--
   Copyright 2017 Michael Simon
   Modifications from Jordan Dohms
-  
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License.  You may obtain a copy
   of the License at
-  
+
     http://www.apache.org/licenses/LICENSE-2.0
-  
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
@@ -32,24 +32,24 @@
 
         <import resource="privacyidea-authn-config.xml" />
 
-        <bean id="TokenGenerator" class="ca.ab.concordia.privacyIDEAtfa.TokenGenerator" scope="prototype"
-                p:httpServletRequest-ref="shibboleth.HttpServletRequest"
-                p:host="%{pi.Host:localhost}"
-                p:serviceUsername="%{pi.Serviceuser:admin}"
-                p:servicePassword="%{pi.Servicepassword:secret}"
-                p:checkCert="%{pi.Checkcert:true}"
-                p:createEmailToken="%{pi.CreateEmailToken:false}" />
+        <bean id="TokenGenerator" class="com.idgain.privacyIDEAtfa.TokenGenerator" scope="prototype"
+              p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+              p:host="%{pi.Host:localhost}"
+              p:serviceUsername="%{pi.Serviceuser:admin}"
+              p:servicePassword="%{pi.Servicepassword:secret}"
+              p:checkCert="%{pi.Checkcert:true}"
+              p:createEmailToken="%{pi.CreateEmailToken:false}" />
 
-        <bean id="ExtractTokenFromForm" class="ca.ab.concordia.privacyIDEAtfa.ExtractTokenFromForm" scope="prototype"
-                p:httpServletRequest-ref="shibboleth.HttpServletRequest" p:tokenCodeField-ref="shibboleth.authn.tokenCodeField" />
+        <bean id="ExtractTokenFromForm" class="com.idgain.privacyIDEAtfa.ExtractTokenFromForm" scope="prototype"
+              p:httpServletRequest-ref="shibboleth.HttpServletRequest" p:tokenCodeField-ref="shibboleth.authn.tokenCodeField" />
 
-        <bean id="privacyIdeaTokenValidator" class="ca.ab.concordia.privacyIDEAtfa.TokenValidator" scope="prototype"
-                p:httpServletRequest-ref="shibboleth.HttpServletRequest"
-                p:classifiedMessages-ref="shibboleth.authn.privacyidea.ClassifiedMessageMap"
-                p:host="%{pi.Host:localhost}"
-                p:serviceUsername="%{pi.Serviceuser:admin}"
-                p:servicePassword="%{pi.Servicepassword:secret}"
-                p:checkCert="%{pi.Checkcert:true}" />
+        <bean id="privacyIdeaTokenValidator" class="com.idgain.privacyIDEAtfa.TokenValidator" scope="prototype"
+              p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+              p:classifiedMessages-ref="shibboleth.authn.privacyidea.ClassifiedMessageMap"
+              p:host="%{pi.Host:localhost}"
+              p:serviceUsername="%{pi.Serviceuser:admin}"
+              p:servicePassword="%{pi.Servicepassword:secret}"
+              p:checkCert="%{pi.Checkcert:true}" />
 
     <bean id="SetRPUIInformation"
             class="net.shibboleth.idp.ui.impl.SetRPUIInformation" scope="prototype"

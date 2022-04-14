@@ -38,13 +38,13 @@
     with whatever event was last signaled. If the "proceed" event from a step is
     the final event, then the MFA process attempts to complete itself successfully.
     -->
-    
+
     <util:map id="shibboleth.authn.MFA.TransitionMap">
         <!-- First rule runs the Password login flow. -->
         <entry key="">
             <bean parent="shibboleth.authn.MFA.Transition" p:nextFlow="authn/Password" />
         </entry>
-        
+
         <!--
         Second rule runs a function if Password succeeds, to determine whether an additional
         factor is required.
@@ -52,11 +52,11 @@
         <entry key="authn/Password">
             <bean parent="shibboleth.authn.MFA.Transition" p:nextFlowStrategy-ref="checkFor2FAToken" />
         </entry>
-        
+
         <!-- An implicit final rule will return whatever the final flow returns. -->
     </util:map>
 
-    <bean id="tokenGenerator" class="ca.ab.concordia.privacyIDEAtfa.TokenGenerator"
+    <bean id="tokenGenerator" class="com.idgain.privacyIDEAtfa.TokenGenerator"
                 p:httpServletRequest-ref="shibboleth.HttpServletRequest"
                 p:host="%{pi.Host:localhost}"
                 p:serviceUsername="%{pi.Serviceuser:admin}"
@@ -85,9 +85,9 @@
                   usernameLookupStrategy = new usernameLookupStrategyClass();
                   username = usernameLookupStrategy.apply(input);
                   logger.debug("Looking up user: {}", username);
-       
+
                   tokenExists = custom.tokenExistsForUser(username);
-                  
+
                   if (tokenExists == false) {
                     logger.debug("No token found for {}.  Skipping 2FA screen.", username);
                     nextFlow = null;

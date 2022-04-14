@@ -1,23 +1,22 @@
 /*******************************************************************************
  * Copyright 2018 Michael Simon, Jordan Dohms
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License.  You may obtain a copy
  * of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
  * License for the specific language governing permissions and limitations under
  * the License.
  ******************************************************************************/
-package ca.ab.concordia.privacyIDEAtfa;
+package com.idgain.privacyIDEAtfa;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -27,27 +26,20 @@ import java.util.HashMap;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonArray;
 import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
+
+// Fixing deprecated code to use current HttpClient implementations      Sekito.Lv 01/30/2019 11:29     Start
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
+// import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -69,13 +61,13 @@ public class piConnection {
   // Sets up class objects (HTTP client, Decoders)
   public piConnection(String piServer, Boolean checkCertificate) throws piSessionException {
     this.piServer = piServer;
-    
+
     httpClient    = getHttpClient(checkCertificate);
     //httpContext   = getHttpContext("admin", "blah");
-    
+
     tokenDecoder  = new piTokenInfoDecoder();
     //userDecoder   = new piUserDecoder();
-    
+
     System.out.println("Connection created");
     logger.debug("Connection created");
   }
@@ -104,8 +96,8 @@ public class piConnection {
       HttpPost httppost = new HttpPost(uriBuilder.build());
       HttpGet httpget = new HttpGet(uriBuilder.build());
 
-      if (authRequired == true) {
-        if (isAuthenticated() == true) {
+      if (authRequired) {
+        if (isAuthenticated()) {
           httppost.addHeader("Authorization" , tfaAuthToken);
           httpget.addHeader("Authorization" , tfaAuthToken);
         } else {
@@ -177,7 +169,7 @@ public class piConnection {
     if (response.containsKey("result")) {
       JsonObject result = response.getJsonObject("result");
       if (result.containsKey("status")) {
-        if (result.getBoolean("status", false) == true) {
+        if (result.getBoolean("status", false)) {
           return true;
         }
       }
@@ -188,24 +180,24 @@ public class piConnection {
   // Validate existing token by supplying serial number and token (tests token only, not PIN/password)
   public boolean validateTokenBySerial(String serial, String token) throws piSessionException {
     logger.debug("Trying to validate token by serial");
-    
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("serial", serial);
       callParameters.put("pass", token);
       callParameters.put("otponly", "1");
       String s = callPrivacyIdeaAPI("/validate/check", "GET", false, callParameters);
-  
+
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
-      if (checkAPISuccess(otp) == true) {
+      if (checkAPISuccess(otp)) {
         JsonObject result = otp.getJsonObject("result");
         Boolean value = result.getBoolean("value", false);
 
         if (logger.isDebugEnabled())
           logger.debug("Validation value {}", value);
 
-        if (value == true) {
+        if (value) {
           logger.debug("Token validated");
           return true;
         }
@@ -215,30 +207,30 @@ public class piConnection {
       logger.debug("Faileds to validate token", e);
       throw new piSessionException("Failed to validate token", e);
     }
-    
+
     return false;
   }
 
   // Validate existing token by supplying username and password/token value
   public boolean validateTokenByUser(String user, String token) throws piSessionException {
     logger.debug("Trying to validate token by user");
-    
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("user", user);
       callParameters.put("pass", token);
       String s = callPrivacyIdeaAPI("/validate/check", "GET", false, callParameters);
-  
+
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
-      if (checkAPISuccess(otp) == true) {
+      if (checkAPISuccess(otp)) {
         JsonObject result = otp.getJsonObject("result");
         Boolean value = result.getBoolean("value", false);
 
         if (logger.isDebugEnabled())
           logger.debug("Validation value {}", value);
 
-        if (value == true) {
+        if (value) {
           System.out.println("Token validated");
           return true;
         }
@@ -248,7 +240,7 @@ public class piConnection {
       logger.debug("Faileds to validate token", e);
       throw new piSessionException("Failed to validate token", e);
     }
-    
+
     return false;
   }
 
@@ -256,7 +248,7 @@ public class piConnection {
   public String getSMSToken(String user) throws piSessionException {
     logger.debug("Trying to retrieve SMS token for {}", user);
     String foundSerial = "000000000000";
-    
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("user", user);
@@ -265,12 +257,12 @@ public class piConnection {
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
 
-      if (checkAPISuccess(otp) == true) {
+      if (checkAPISuccess(otp)) {
         List<piTokenInfo> tokenList = tokenDecoder.decodeTokenList(otp);
 
         for (piTokenInfo token : tokenList) {
           if (token.getTokenType().equals("sms")) {
-            foundSerial = token.getSerial(); 
+            foundSerial = token.getSerial();
           }
         }
       }
@@ -287,7 +279,7 @@ public class piConnection {
   public String getEmailToken(String user) throws piSessionException {
     logger.debug("Trying to retrieve email token for {}", user);
     String foundSerial = "000000000000";
-    
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("user", user);
@@ -296,12 +288,12 @@ public class piConnection {
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
 
-      if (checkAPISuccess(otp) == true) {
+      if (checkAPISuccess(otp)) {
         List<piTokenInfo> tokenList = tokenDecoder.decodeTokenList(otp);
 
         for (piTokenInfo token : tokenList) {
           if (token.getTokenType().equals("email")) {
-            foundSerial = token.getSerial(); 
+            foundSerial = token.getSerial();
           }
         }
       }
@@ -316,9 +308,9 @@ public class piConnection {
 
   public List<piTokenInfo> getTokenList(String user) throws piSessionException {
     logger.debug("Trying to retrieve all token for {}", user);
-    
+
     CloseableHttpResponse response = null;
-      
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("user", user);
@@ -326,10 +318,8 @@ public class piConnection {
 
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
-        
-      List<piTokenInfo> tokenList  = tokenDecoder.decodeTokenList(otp);
 
-      return tokenList;
+      return tokenDecoder.decodeTokenList(otp);
     }  catch (Exception e) {
       System.out.println(e.getMessage());
       logger.debug("Failed to retrieve any token for user", e);
@@ -342,7 +332,7 @@ public class piConnection {
   // Issue challenge for a specific SMS token
   public void issueSMSChallenge(String serial) throws piSessionException {
     logger.debug("Issuing SMS challenge for token {}", serial);
-    
+
     try {
       HashMap<String, String> callParameters = new HashMap<String, String>();
       callParameters.put("serial", serial);
@@ -352,7 +342,7 @@ public class piConnection {
 
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
-      if (checkAPISuccess(otp) == false) {
+      if (!checkAPISuccess(otp)) {
         System.out.println("Unable to issue SMS challenge");
         logger.debug("{} No details, probably no challenge/response");
       }
@@ -360,7 +350,7 @@ public class piConnection {
       logger.debug("Failed to generate SMS challenge", e);
       throw new piSessionException("Failed to generate SMS challenge", e);
     }
-    
+
   }
 
   // Issue challenge for a specific E-Mail token
@@ -374,7 +364,7 @@ public class piConnection {
 
       JsonReader reader = Json.createReader(new StringReader(s));
       JsonObject otp = reader.readObject();
-      if (checkAPISuccess(otp) == false) {
+      if (!checkAPISuccess(otp)) {
         System.out.println("Unable to issue Email challenge");
         logger.debug("{} No details, probably no challenge/response");
       }
@@ -383,12 +373,12 @@ public class piConnection {
       throw new piSessionException("Failed to generate Email challenge", e);
     }
 
-  } 
+  }
 
 
   private CloseableHttpClient getHttpClient(Boolean checkCert) throws piSessionException {
     CloseableHttpClient httpclient;
-    
+
     if (checkCert) {
       httpclient = HttpClients.createDefault();
     }
@@ -396,20 +386,16 @@ public class piConnection {
       try {
         SSLContextBuilder builder = new SSLContextBuilder();
         SSLContext sslContext = builder.loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-        
+
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
             sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-      } catch (KeyManagementException e) {
-        throw new piSessionException(e);
-      } catch (NoSuchAlgorithmException e) {
-        throw new piSessionException(e);
-      } catch (KeyStoreException e) {
+      } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
         throw new piSessionException(e);
       }
     }
 
     return httpclient;
   }
-  
+
 }

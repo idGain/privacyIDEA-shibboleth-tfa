@@ -86,6 +86,6 @@ You will most probably need to customize the `vm` files view to reflect your IDP
 Testshib.org in conjunction with debug logging is a life saver.  Get your IDP running and you can test the login process via https://sp.testshib.org/  To enable debug logging for your class, edit `{idp.home}/conf/logback.xml`  and add the following lines:
 
 ```
-    <logger name="ca.ab.concordia.privacyIDEAtfa" level="DEBUG" />
+    <logger name="com.idgain.privacyIDEAtfa" level="DEBUG" />
     <logger name="checkFor2FAToken" level="DEBUG" />
 ```
